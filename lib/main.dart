@@ -341,7 +341,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     // Render pain strokes to a separate image to count pixels
     final painRecorder = ui.PictureRecorder();
     final painCanvas = Canvas(painRecorder, Rect.fromLTWH(0, 0, realWidth, realHeight));
-    final painPaint = Paint()..color = Colors.green..strokeCap = StrokeCap.round;
+    final painPaint = Paint()..color = Colors.yellow..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < _points.length - 1; i++) {
       final p1 = _points[i];
@@ -394,7 +394,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     );
 
     // Draw pain on final image
-    final finalPaint = Paint()..color = Colors.green..strokeCap = StrokeCap.round;
+    final finalPaint = Paint()..color = Colors.yellow..strokeCap = StrokeCap.round;
     for (int i = 0; i < _points.length - 1; i++) {
       final p1 = _points[i];
       final p2 = _points[i + 1];
@@ -746,7 +746,7 @@ class PainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
-    final paint = Paint()..color = Colors.green..strokeCap = StrokeCap.round;
+    final paint = Paint()..color = Colors.yellow..strokeCap = StrokeCap.round;
     for (int i = 0; i < points.length - 1; i++) {
       final p1 = points[i];
       final p2 = points[i + 1];
