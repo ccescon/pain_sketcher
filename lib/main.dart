@@ -145,6 +145,121 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     _resetView();
   }
 
+
+
+
+
+
+  String _generateFileName() {
+    final now = DateTime.now();
+
+    final date = '${now.year}'
+        '${now.month.toString().padLeft(2, '0')}'
+        '${now.day.toString().padLeft(2, '0')}';
+
+    final time = '${now.hour.toString().padLeft(2, '0')}'
+        '${now.minute.toString().padLeft(2, '0')}'
+        '${now.second.toString().padLeft(2, '0')}';
+
+    return 'Pain Sketch - $date $time.png';
+  }
+
+
+
+
+
+/*
+  Future<void> _shareImage() async {
+    final pngBytes = await _generatePngBytes();
+    if (pngBytes == null) return;
+
+    final tempDir = await getTemporaryDirectory();
+
+    final file = File('${tempDir.path}/${_generateFileName()}');
+    await file.writeAsBytes(pngBytes);
+
+    if (!mounted) return;
+
+    final box = context.findRenderObject() as RenderBox;
+
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      text: 'Pain Sketch',
+      sharePositionOrigin:
+      box.localToGlobal(Offset.zero) & box.size,
+    );
+  }
+*/
+  Future<void> _shareImage() async {
+    try {
+      debugPrint('SHARE: pulsante premuto');
+
+      final pngBytes = await _generatePngBytes();
+
+      if (pngBytes == null) {
+        debugPrint('SHARE: PNG nullo');
+        return;
+      }
+
+      final tempDir = await getTemporaryDirectory();
+
+      final file = File(
+        '${tempDir.path}/${_generateFileName()}',
+      );
+
+      await file.writeAsBytes(pngBytes, flush: true);
+
+      debugPrint('SHARE: file ${file.path}');
+      debugPrint('SHARE: esiste ${await file.exists()}');
+
+      if (!mounted) return;
+
+      // Rettangolo al centro dello schermo
+      final screenSize = MediaQuery.sizeOf(context);
+
+      final shareRect = Rect.fromCenter(
+        center: Offset(
+          screenSize.width / 2,
+          screenSize.height / 2,
+        ),
+        width: 100,
+        height: 100,
+      );
+
+      debugPrint('SHARE: apertura menu');
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png')],
+        text: 'Pain Sketch',
+        sharePositionOrigin: shareRect,
+      );
+
+      debugPrint('SHARE: menu chiuso');
+
+    } catch (e, stack) {
+      debugPrint('SHARE ERROR: $e');
+      debugPrint('$stack');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Share error: $e'),
+          duration: const Duration(seconds: 8),
+        ),
+      );
+    }
+  }
+
+
+//  final file = File('${directory.path}/pain_sketch.png');
+
+
+  // final file = File('${directory.path}/${_generateFileName()}');
+
+
+
+
   void _resetView() {
     _matrix = Matrix4.identity()..scaleByDouble(4.0, 4.0, 1.0, 1.0);
     _prevScale = 1.0;
@@ -152,7 +267,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
       if (!mounted) return;
 
       final RenderBox? imageBox =
-          _imageKey.currentContext?.findRenderObject() as RenderBox?;
+      _imageKey.currentContext?.findRenderObject() as RenderBox?;
       if (imageBox == null) return;
 
       final double screenWidth = MediaQuery.sizeOf(context).width;
@@ -240,22 +355,22 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
         painCanvas.drawCircle(p1.position * outputScale, (p1.strokeWidth * outputScale) / 2, painPaint);
       }
     }
-    
+
     final painImg = await painRecorder.endRecording().toImage(realWidth.toInt(), realHeight.toInt());
     final painData = await painImg.toByteData(format: ui.ImageByteFormat.rawRgba);
-    
+
     final maskImg = await _loadAssetImage(widget.maskPath);
     final maskData = await maskImg.toByteData(format: ui.ImageByteFormat.rawRgba);
 
     if (painData != null && maskData != null) {
       final Uint8List painBytes = painData.buffer.asUint8List();
       final Uint8List maskBytes = maskData.buffer.asUint8List();
-      
+
       for (int i = 0; i < maskBytes.length; i += 4) {
         // format is RGBA, so index + 3 is alpha
         final int maskAlpha = maskBytes[i + 3];
         final int painAlpha = painBytes[i + 3];
-        
+
         if (maskAlpha < 128) { // Pixel inside the body silhouette
           totalMaskPixels++;
           if (painAlpha > 128) { // Pixel marked as pain
@@ -339,16 +454,17 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     try {
       String? path;
       if (Platform.isAndroid) {
-        path = '/storage/emulated/0/Download/pain_sketch_${DateTime.now().millisecondsSinceEpoch}.png';
+        path = '/storage/emulated/0/Download/${_generateFileName()}';
+//        path}/${_generateFileName()}');
         final file = File(path);
         await file.writeAsBytes(pngBytes);
       } else {
         final dir = await getApplicationDocumentsDirectory();
-        path = '${dir.path}/pain_sketch_${DateTime.now().millisecondsSinceEpoch}.png';
+        path = '${dir.path}/${_generateFileName()}';
         final file = File(path);
         await file.writeAsBytes(pngBytes);
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Saved to Downloads: $path')),
@@ -363,7 +479,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
       _shareImage();
     }
   }
-
+/*
   Future<void> _shareImage() async {
     final pngBytes = await _generatePngBytes();
     if (pngBytes == null) return;
@@ -371,9 +487,14 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     final tempDir = await getTemporaryDirectory();
     final file = File('${tempDir.path}/pain_sketch.png');
     await file.writeAsBytes(pngBytes);
-    await Share.shareXFiles([XFile(file.path)], text: 'Pain Sketch');
-  }
+    if (!mounted) return;
+    final box = context.findRenderObject() as RenderBox;
+    final sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
 
+    await Share.shareXFiles([XFile(file.path)], text: 'Pain Sketch',
+      sharePositionOrigin: sharePositionOrigin,);
+  }
+*/
   Future<ui.Image> _loadAssetImage(String path) async {
     final data = await rootBundle.load(path);
 
@@ -418,16 +539,13 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
         child: Listener(
           onPointerDown: (event) {
             _pointers++;
-            if (_pointers == 1) {
-              _firstPointerStartTime = DateTime.now();
-            } else if (_pointers > 1) {
+            if (_pointers == 1) _firstPointerStartTime = DateTime.now();
+            else if (_pointers > 1) {
               _ignoreUntilAllUp = true;
               if (_isDrawing) {
                 final elapsed = DateTime.now().difference(_firstPointerStartTime!);
                 setState(() {
-                  if (elapsed < const Duration(milliseconds: 200)) {
-                    _performUndo();
-                  }
+                  if (elapsed < const Duration(milliseconds: 200)) _performUndo();
                   _endStroke();
                 });
               }
@@ -435,10 +553,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
           },
           onPointerUp: (event) {
             _pointers--;
-            if (_pointers == 0) {
-              _ignoreUntilAllUp = false;
-              _endStroke();
-            }
+            if (_pointers == 0) { _ignoreUntilAllUp = false; _endStroke(); }
           },
           child: GestureDetector(
             onScaleStart: (details) {
@@ -462,13 +577,13 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
                     _prevScale = details.scale;
                     final focalPoint = details.localFocalPoint;
                     final currentScale = _matrix.getMaxScaleOnAxis();
-                    
+
                     // Fixed Matrix4 transformations
                     if ((currentScale > 1.0 || deltaScale > 1.0) && (currentScale < 16.0 || deltaScale < 1.0)) {
                       _matrix = Matrix4.identity()
-                        ..translateByDouble(focalPoint.dx, focalPoint.dy, 0.0, 0.0)
-                        ..scaleByDouble(deltaScale, deltaScale, 1.0, 1.0)
-                        ..translateByDouble(-focalPoint.dx, -focalPoint.dy, 0.0, 0.0)
+                        ..translate(focalPoint.dx, focalPoint.dy)
+                        ..scale(deltaScale)
+                        ..translate(-focalPoint.dx, -focalPoint.dy)
                         ..multiply(_matrix);
                     }
                   }
