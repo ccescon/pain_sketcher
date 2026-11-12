@@ -146,7 +146,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
   }
 
   void _resetView() {
-    _matrix = Matrix4.identity()..scale(4.0);
+    _matrix = Matrix4.identity()..scaleByDouble(4.0, 4.0, 1.0, 1.0);
     _prevScale = 1.0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -226,7 +226,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     // Render pain strokes to a separate image to count pixels
     final painRecorder = ui.PictureRecorder();
     final painCanvas = Canvas(painRecorder, Rect.fromLTWH(0, 0, realWidth, realHeight));
-    final painPaint = Paint()..color = Colors.red..strokeCap = StrokeCap.round;
+    final painPaint = Paint()..color = Colors.green..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < _points.length - 1; i++) {
       final p1 = _points[i];
@@ -279,7 +279,7 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
     );
 
     // Draw pain on final image
-    final finalPaint = Paint()..color = Colors.red..strokeCap = StrokeCap.round;
+    final finalPaint = Paint()..color = Colors.green..strokeCap = StrokeCap.round;
     for (int i = 0; i < _points.length - 1; i++) {
       final p1 = _points[i];
       final p2 = _points[i + 1];
@@ -418,13 +418,16 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
         child: Listener(
           onPointerDown: (event) {
             _pointers++;
-            if (_pointers == 1) _firstPointerStartTime = DateTime.now();
-            else if (_pointers > 1) {
+            if (_pointers == 1) {
+              _firstPointerStartTime = DateTime.now();
+            } else if (_pointers > 1) {
               _ignoreUntilAllUp = true;
               if (_isDrawing) {
                 final elapsed = DateTime.now().difference(_firstPointerStartTime!);
                 setState(() {
-                  if (elapsed < const Duration(milliseconds: 200)) _performUndo();
+                  if (elapsed < const Duration(milliseconds: 200)) {
+                    _performUndo();
+                  }
                   _endStroke();
                 });
               }
@@ -432,7 +435,10 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
           },
           onPointerUp: (event) {
             _pointers--;
-            if (_pointers == 0) { _ignoreUntilAllUp = false; _endStroke(); }
+            if (_pointers == 0) {
+              _ignoreUntilAllUp = false;
+              _endStroke();
+            }
           },
           child: GestureDetector(
             onScaleStart: (details) {
@@ -460,9 +466,9 @@ class _PainDrawingPageState extends State<PainDrawingPage> {
                     // Fixed Matrix4 transformations
                     if ((currentScale > 1.0 || deltaScale > 1.0) && (currentScale < 16.0 || deltaScale < 1.0)) {
                       _matrix = Matrix4.identity()
-                        ..translate(focalPoint.dx, focalPoint.dy)
-                        ..scale(deltaScale)
-                        ..translate(-focalPoint.dx, -focalPoint.dy)
+                        ..translateByDouble(focalPoint.dx, focalPoint.dy, 0.0, 0.0)
+                        ..scaleByDouble(deltaScale, deltaScale, 1.0, 1.0)
+                        ..translateByDouble(-focalPoint.dx, -focalPoint.dy, 0.0, 0.0)
                         ..multiply(_matrix);
                     }
                   }
@@ -625,7 +631,7 @@ class PainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
-    final paint = Paint()..color = Colors.red..strokeCap = StrokeCap.round;
+    final paint = Paint()..color = Colors.green..strokeCap = StrokeCap.round;
     for (int i = 0; i < points.length - 1; i++) {
       final p1 = points[i];
       final p2 = points[i + 1];
