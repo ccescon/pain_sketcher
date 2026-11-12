@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Cache e percorsi locali Android
+/android/.gradle/
+/android/local.properties
+
+# Password e chiavi di firma
+**/key.properties
+*.jks
+*.keystore
+
+# Configurazioni locali riservate
+.env
+.env.*
+!.env.example
